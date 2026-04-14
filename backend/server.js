@@ -26,13 +26,11 @@ app.use('/api/requests', requestRoutes);
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 
 // Serve Frontend in Production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
-  });
-}
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+});
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
