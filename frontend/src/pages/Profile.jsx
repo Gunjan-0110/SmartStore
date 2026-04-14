@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const PERMISSIONS = [
   { key: 'read',          label: 'Read',           desc: 'View inventory and assets',           icon: '👁',  adminOnly: false },
@@ -11,6 +13,27 @@ const PERMISSIONS = [
 
 export default function Profile() {
   const { user } = useAuth();
+  const [requests, setRequests] = useState([]);
+  const [requestingItem, setRequestingItem] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/requests/mine').then(({ data }) => {
+      setRequests(data.requests || []);
+    }).catch(console.error);
+  }, [user]);
+
+  const requestAccess = async (permissionKey) => {
+    setRequestingItem(permissionKey);
+    try {
+      const { data } = await api.post('/requests', { permission: permissionKey });
+      setRequests(r => [data.request, ...r]);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit request');
+    } finally {
+      setRequestingItem(null);
+    }
+  };
 
   const roleLabel = user?.isSuperAdmin ? 'Super Admin' : user?.role || 'User';
   const roleBadgeClass = user?.isSuperAdmin ? 'badge-super-admin' : user?.role === 'Admin' ? 'badge-admin' : 'badge-user';
@@ -73,6 +96,8 @@ export default function Profile() {
               .map(({ key, label, desc, icon, adminOnly }) => {
                 const isAdmin = user?.isSuperAdmin || user?.role === 'Admin';
                 const granted = user?.isSuperAdmin || (adminOnly ? isAdmin : !!user?.permissions?.[key]);
+                const pending = requests.find(r => r.permission === key && r.status === 'pending');
+
                 return (
                   <div key={key} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -88,12 +113,40 @@ export default function Profile() {
                         <div className="text-xs text-secondary">{desc}</div>
                       </div>
                     </div>
-                    <div style={{
-                      padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: granted ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
-                      color: granted ? 'var(--accent-green)' : 'var(--accent-red)',
-                    }}>
-                      {granted ? 'GRANTED' : 'DENIED'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {granted ? (
+                        <div style={{
+                          padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          background: 'rgba(34,197,94,0.15)',
+                          color: 'var(--accent-green)',
+                        }}>
+                          GRANTED
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{
+                            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                            background: 'rgba(239,68,68,0.12)',
+                            color: 'var(--accent-red)',
+                          }}>
+                            DENIED
+                          </div>
+                          {pending ? (
+                            <button className="btn btn-ghost btn-sm" disabled style={{ fontSize: 10, padding: '4px 8px' }}>
+                              Pending…
+                            </button>
+                          ) : (
+                            <button 
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => requestAccess(key)}
+                              disabled={requestingItem === key}
+                              style={{ fontSize: 10, padding: '4px 8px' }}
+                            >
+                              {requestingItem === key ? '...' : 'Request Access'}
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 );

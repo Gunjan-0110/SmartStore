@@ -1,5 +1,6 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const IconDashboard = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -40,7 +41,6 @@ function getInitials(name = '') {
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
   const handleLogout = () => { logout(); navigate('/'); };
 
   return (

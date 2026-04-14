@@ -8,7 +8,8 @@ const auditLogSchema = new mongoose.Schema({
     enum: [
       'Created Asset', 'Updated Asset', 'Deleted Asset',
       'Updated Inventory', 'Changed User Role', 'Added User',
-      'Deleted User', 'Updated User', 'Login', 'Logout'
+      'Deleted User', 'Updated User', 'Login', 'Logout',
+      'Approved Permission Request', 'Rejected Permission Request'
     ]
   },
   target:  { type: String, required: true },

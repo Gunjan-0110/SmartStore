@@ -7,6 +7,7 @@ const authRoutes  = require('./routes/auth');
 const assetRoutes = require('./routes/assets');
 const userRoutes  = require('./routes/users');
 const logRoutes   = require('./routes/logs');
+const requestRoutes = require('./routes/requests');
 
 const app = express();
 
@@ -14,10 +15,11 @@ app.use(cors({ origin: /^http:\/\/localhost:\d+$/, credentials: true }));
 app.use(express.json());
 
 // Routes
-app.use('/api/auth',   authRoutes);
-app.use('/api/assets', assetRoutes);
-app.use('/api/users',  userRoutes);
-app.use('/api/logs',   logRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/assets',   assetRoutes);
+app.use('/api/users',    userRoutes);
+app.use('/api/logs',     logRoutes);
+app.use('/api/requests', requestRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ComposedChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
 
 function getInitials(name = '') {
   return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -27,33 +28,12 @@ function getAvatarStyle(action = '') {
   return { background: 'rgba(245,158,11,.15)', color: '#f59e0b' };
 }
 
-function BarChart({ assets }) {
-  if (!assets.length) return <p className="text-secondary text-sm">No data</p>;
-  const maxQty = Math.max(...assets.map(a => a.qty), 1);
-  const shown = assets.slice(0, 8);
-  return (
-    <div className="chart-bar-wrap">
-      {shown.map(a => {
-        const pct = Math.max((a.qty / maxQty) * 100, a.qty === 0 ? 0 : 4);
-        const color = a.qty === 0 ? '#ef4444' : a.qty <= a.safety ? '#f59e0b' : '#3b82f6';
-        return (
-          <div className="chart-bar-item" key={a._id} title={`${a.name}: ${a.qty}`}>
-            <div className="chart-bar-val">{a.qty}</div>
-            <div className="chart-bar-track" style={{ flex: 1, minHeight: 80 }}>
-              <div className="chart-bar-fill" style={{ height: `${pct}%`, background: color }} />
-            </div>
-            <div className="chart-bar-label">{a.name.split(' ')[0]}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [assets, setAssets] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [pendingReqs, setPendingReqs] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,10 +43,14 @@ export default function Dashboard() {
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    // Only fetch logs if admin
+    // Only fetch logs and requests if admin
     if (user?.role === 'Admin') {
       api.get('/logs')
         .then(l => setLogs((l.data.logs || []).slice(0, 6)))
+        .catch(console.error);
+        
+      api.get('/requests')
+        .then(r => setPendingReqs((r.data.requests || []).filter(x => x.status === 'pending').length))
         .catch(console.error);
     }
   }, []);
@@ -75,6 +59,27 @@ export default function Dashboard() {
   const lowStock     = assets.filter(a => a.qty > 0 && a.qty <= a.safety).length;
   const outOfStock   = assets.filter(a => a.qty === 0).length;
   const categories   = new Set(assets.map(a => a.category)).size;
+
+  const categoryData = Object.entries(
+    assets.reduce((acc, a) => {
+      acc[a.category] = (acc[a.category] || 0) + a.qty;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  const statusData = [
+    { name: 'Safe', value: assets.filter(a => a.qty > a.safety).length, color: 'var(--accent-green)' },
+    { name: 'Low Stock', value: lowStock, color: '#f59e0b' },
+    { name: 'Out of Stock', value: outOfStock, color: 'var(--accent-red)' }
+  ].filter(d => d.value > 0);
+
+  const CATEGORY_COLORS = ['#3b82f6', '#a855f7', '#f59e0b', '#22c55e', '#ef4444', '#64748b'];
+
+  const composedData = assets.map(a => ({
+    name: a.name.split(' ')[0],
+    qty: a.qty,
+    safety: a.safety
+  })).slice(0, 10);
 
   if (loading) return <div className="page"><p className="text-secondary">Loading dashboard…</p></div>;
 
@@ -87,6 +92,13 @@ export default function Dashboard() {
         </div>
         <Link to="/add-asset" className="btn btn-primary btn-sm">+ Add Asset</Link>
       </div>
+
+      {user?.role === 'Admin' && pendingReqs > 0 && (
+        <div className="alert" style={{ background: 'rgba(59,130,246,.15)', border: '1px solid rgba(59,130,246,.3)', color: 'var(--accent-blue)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>You have <strong>{pendingReqs}</strong> pending permission request{pendingReqs !== 1 && 's'} awaiting approval.</span>
+          <Link to="/access" className="btn btn-ghost btn-sm" style={{ border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)' }}>Review</Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stat-grid">
@@ -115,75 +127,99 @@ export default function Dashboard() {
           <div className="stat-value">{categories}</div>
           <div className="stat-sub">Asset types</div>
         </div>
-      </div>
-
-      {/* Charts + Activity */}
+      </div>      {/* Main Layout Grid */}
       <div className={user?.role === 'Admin' ? 'two-col' : ''}>
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="font-bold">Stock Levels</div>
-              <div className="text-xs text-secondary">Current quantity per asset</div>
-            </div>
-          </div>
-          <BarChart assets={assets} />
+        
+        {/* LEFT COLUMN: All Analytics */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* 1. Composed Overlay Chart */}
+            {assets.length > 0 && (
+              <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <div className="font-bold">Asset vs Safety Thresholds</div>
+                    <div className="text-xs text-secondary">Actual inventory vs minimum limits</div>
+                  </div>
+                </div>
+                <div style={{ width: '100%', flex: 1, minHeight: 260 }}>
+                  <ResponsiveContainer>
+                    <ComposedChart data={composedData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} />
+                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)' }} />
+                      <Legend iconType="circle" wrapperStyle={{ paddingTop: 10, fontSize: 11 }} />
+                      <Bar dataKey="qty" name="Current Stock" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={30} />
+                      <Line type="monotone" dataKey="safety" name="Safety Threshold" stroke="var(--accent-yellow)" strokeWidth={2} dot={{ r: 4, fill: 'var(--bg-card)', strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+
         </div>
 
-        {user?.role === 'Admin' && (
-          <div className="card">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <div className="font-bold">Recent Activity</div>
-                <div className="text-xs text-secondary">Latest audit events</div>
+        {/* RIGHT COLUMN: Activity & Critical Lists */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Activity Feed */}
+            {user?.role === 'Admin' && (
+              <div className="card" style={{ height: '100%' }}>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <div className="font-bold">Recent Activity</div>
+                    <div className="text-xs text-secondary">Latest audit events</div>
+                  </div>
+                  <Link to="/audit" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 11 }}>View All</Link>
+                </div>
+                {logs.length === 0
+                  ? <p className="text-secondary text-sm">No activity yet</p>
+                  : logs.map((log, i) => {
+                      const pill = getOpPill(log.action);
+                      return (
+                        <div className="activity-item" key={log._id || i} style={{ padding: '8px 0' }}>
+                          <div className="activity-avatar" style={{ ...getAvatarStyle(log.action), width: 28, height: 28, fontSize: 10 }}>
+                            {getInitials(log.user)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
+                              <span className="font-medium" style={{ fontSize: 12 }}>{log.user}</span>
+                              <span className={pill.cls} style={{ fontSize: 9 }}>{pill.label}</span>
+                            </div>
+                            <div className="activity-action" style={{ fontSize: 11 }}>
+                              {log.action} — <span className="activity-target">{log.target}</span>
+                            </div>
+                            <div className="activity-time" style={{ fontSize: 10 }}>{new Date(log.createdAt).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
               </div>
-              <Link to="/audit" className="btn btn-ghost btn-sm">View All</Link>
-            </div>
-            {logs.length === 0
-              ? <p className="text-secondary text-sm">No activity yet</p>
-              : logs.map((log, i) => {
-                  const pill = getOpPill(log.action);
-                  return (
-                    <div className="activity-item" key={log._id || i}>
-                      <div className="activity-avatar" style={getAvatarStyle(log.action)}>
-                        {getInitials(log.user)}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
-                          <span className="font-medium text-sm">{log.user}</span>
-                          <span className={pill.cls}>{pill.label}</span>
-                        </div>
-                        <div className="activity-action text-sm">
-                          {log.action} — <span className="activity-target">{log.target}</span>
-                        </div>
-                        <div className="activity-time">{new Date(log.createdAt).toLocaleString()}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-          </div>
-        )}
+            )}
+
+        </div>
       </div>
 
-      {/* Low stock table */}
+      {/* Low stock table - Now Full Width */}
       {(lowStock + outOfStock) > 0 && (
-        <div className="card" style={{ marginTop: 20 }}>
-          <div className="font-bold mb-4">⚠ Assets Needing Attention</div>
+        <div className="card" style={{ marginTop: 24 }}>
+          <div className="font-bold mb-4">⚠ Action Needed</div>
           <div className="table-wrap">
-            <table>
+            <table style={{ minWidth: '100%' }}>
               <thead>
                 <tr>
-                  <th>Asset</th><th>SKU</th><th>Qty</th><th>Safety</th><th>Status</th>
+                  <th style={{ padding: '8px 12px' }}>Asset</th><th style={{ padding: '8px 12px' }}>SKU</th><th style={{ padding: '8px 12px' }}>Qty</th><th style={{ padding: '8px 12px' }}>Safety</th><th style={{ padding: '8px 12px' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {assets.filter(a => a.qty <= a.safety).map(a => (
                   <tr key={a._id}>
-                    <td><div className="font-medium">{a.name}</div><div className="text-xs text-secondary">{a.category}</div></td>
-                    <td><span className="mono">{a.sku}</span></td>
-                    <td className="font-bold">{a.qty}</td>
-                    <td className="text-secondary">{a.safety}</td>
-                    <td>
-                      <span className={`badge ${a.qty === 0 ? 'badge-out' : 'badge-low'}`}>
+                    <td style={{ padding: '8px 12px' }}><div className="font-medium text-sm">{a.name}</div><div className="text-xs text-secondary">{a.category}</div></td>
+                    <td style={{ padding: '8px 12px' }}><span className="mono">{a.sku}</span></td>
+                    <td className="font-bold" style={{ padding: '8px 12px' }}>{a.qty}</td>
+                    <td style={{ padding: '8px 12px' }} className="text-secondary">{a.safety}</td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <span className={`badge ${a.qty === 0 ? 'badge-out' : 'badge-low'}`} style={{ fontSize: 10 }}>
                         {a.qty === 0 ? 'Out of Stock' : 'Low Stock'}
                       </span>
                     </td>
@@ -194,6 +230,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
