@@ -17,36 +17,39 @@ smartstock/
 │   ├── server.js       Express entry point + DB seed
 │   ├── .env.example
 │   └── package.json
-└── frontend/
-    ├── src/
-    │   ├── context/    AuthContext.jsx
-    │   ├── services/   api.js  (Axios + JWT interceptor)
-    │   ├── components/ Sidebar.jsx | Layout.jsx
-    │   └── pages/      Login | Dashboard | Inventory | AddAsset | AuditLog | AccessControl
-    ├── index.html
-    ├── vite.config.js
-    └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── context/    AuthContext.jsx
+│   │   ├── services/   api.js  (Axios + JWT interceptor)
+│   │   ├── components/ Sidebar.jsx | Layout.jsx
+│   │   └── pages/      Login | Dashboard | Inventory | AddAsset | AuditLog | AccessControl
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
+└── package.json        Root — runs both servers with one command
 ```
 
 ## Setup & Run
 
-### 1. Backend
+### 1. Install all dependencies
 ```bash
-cd backend
-cp .env.example .env
-# Edit .env — set MONGODB_URI and JWT_SECRET
-npm install
-npm run dev       # nodemon on port 5000
+npm run install-all
 ```
 
-### 2. Frontend
+### 2. Configure environment variables
 ```bash
-cd frontend
-npm install
-npm run dev       # Vite on port 5173
+cp backend/.env.example backend/.env
+# Edit backend/.env — set MONGODB_URI and JWT_SECRET
 ```
 
-Open **http://localhost:5173**
+### 3. Run the full project (single command)
+```bash
+npm run dev
+```
+
+This starts both servers simultaneously:
+- **Backend** → http://localhost:5002
+- **Frontend** → http://localhost:5173
 
 ## Default Credentials (auto-seeded)
 | Email | Password | Role |
