@@ -56,6 +56,7 @@ async function seedDatabase() {
         password: 'admin123',
         name: 'Admin User',
         role: 'Admin',
+        isSuperAdmin: true,
         permissions: { read: true, edit: true, delete: true, add: true }
       },
       {

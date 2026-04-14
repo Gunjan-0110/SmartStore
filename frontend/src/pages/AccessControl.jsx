@@ -83,6 +83,29 @@ export default function AccessControl() {
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState('');
 
+  // Can the current user edit target user u?
+  const canEdit = (u) => {
+    if (u.isSuperAdmin) return false;                              // super admin is locked for everyone
+    if (!me?.isSuperAdmin && u.role === 'Admin') return false;    // only super admin can edit other admins
+    return true;
+  };
+
+  // Can the current user promote/demote user u?
+  const canToggleRole = (u) => {
+    if (u.isSuperAdmin) return false;                              // super admin role is locked forever
+    if (!me?.isSuperAdmin && u.role === 'Admin') return false;    // only super admin can demote admins
+    if (!me?.isSuperAdmin) return false;                          // only super admin can promote to admin
+    return true;
+  };
+
+  // Can the current user delete user u?
+  const canDelete = (u) => {
+    if (u.isSuperAdmin) return false;                              // super admin can never be deleted
+    if (u._id === me?._id) return false;                           // can't delete yourself
+    if (!me?.isSuperAdmin && u.role === 'Admin') return false;    // only super admin can delete admins
+    return true;
+  };
+
   useEffect(() => {
     api.get('/users').then(({ data }) => setUsers(data.users || []))
       .catch(() => setError('Failed to load users'))
@@ -91,8 +114,11 @@ export default function AccessControl() {
 
   const handleToggleRole = async (u) => {
     const newRole = u.role === 'Admin' ? 'User' : 'Admin';
+    const updatedPermissions = newRole === 'Admin'
+      ? { read: true, edit: true, delete: true, add: true }
+      : u.permissions;
     try {
-      const { data } = await api.put(`/users/${u._id}`, { ...u, role: newRole });
+      const { data } = await api.put(`/users/${u._id}`, { ...u, role: newRole, permissions: updatedPermissions });
       setUsers(list => list.map(x => x._id === u._id ? data.user : x));
     } catch (err) { alert(err.response?.data?.message || 'Update failed'); }
   };
@@ -150,12 +176,11 @@ export default function AccessControl() {
                 {users.map(u => (
                   <tr key={u._id}>
                     <td>
-                      <div className="font-medium">{u.name}</div>
                       <div className="text-xs text-secondary">{u.email}</div>
                     </td>
                     <td>
-                      <span className={`badge ${u.role === 'Admin' ? 'badge-admin' : 'badge-user'}`}>
-                        {u.role.toUpperCase()}
+                      <span className={`badge ${u.isSuperAdmin ? 'badge-super-admin' : u.role === 'Admin' ? 'badge-admin' : 'badge-user'}`}>
+                        {u.isSuperAdmin ? 'SUPER ADMIN' : u.role.toUpperCase()}
                       </span>
                     </td>
                     {['read', 'edit', 'delete', 'add'].map(perm => (
@@ -164,23 +189,28 @@ export default function AccessControl() {
                           type="checkbox"
                           className="checkbox"
                           checked={!!u.permissions?.[perm]}
-                          disabled={u._id === me?._id}
+                          disabled={!canEdit(u)}
                           onChange={e => handlePermChange(u, perm, e.target.checked)}
                         />
                       </td>
                     ))}
                     <td>
-                      {u._id !== me?._id && (
-                        <>
-                          <button className="btn btn-ghost btn-sm" style={{ marginRight: 6 }} onClick={() => handleToggleRole(u)}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {u._id === me?._id && <span className="text-xs text-secondary">(You)</span>}
+                        {canToggleRole(u) && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => handleToggleRole(u)}>
                             {u.role === 'Admin' ? 'Demote' : 'Promote'}
                           </button>
+                        )}
+                        {canDelete(u) && (
                           <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u)}>
                             Delete
                           </button>
-                        </>
-                      )}
-                      {u._id === me?._id && <span className="text-xs text-secondary">(You)</span>}
+                        )}
+                        {!canEdit(u) && u._id !== me?._id && (
+                          <span className="text-xs text-secondary">Protected</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

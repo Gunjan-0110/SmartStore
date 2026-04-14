@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function Login() {
-  const { login } = useAuth();
+export default function Signup() {
+  const { signup } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,12 +14,14 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    if (form.password !== form.confirm)
+      return setError('Passwords do not match.');
     setLoading(true);
     try {
-      await login(form.email, form.password);
+      await signup(form.name, form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Sign up failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -31,12 +33,20 @@ export default function Login() {
         <div className="login-header">
           <div className="login-logo">S</div>
           <div className="login-title">SmartStock OS</div>
-          <div className="login-sub">Inventory Management System</div>
+          <div className="login-sub">Create your account</div>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
 
         <form className="login-form" onSubmit={submit}>
+          <div className="form-group">
+            <label htmlFor="name">Full Name</label>
+            <input
+              id="name" name="name" type="text"
+              placeholder="John Doe"
+              value={form.name} onChange={handle} required
+            />
+          </div>
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <input
@@ -49,18 +59,25 @@ export default function Login() {
             <label htmlFor="password">Password</label>
             <input
               id="password" name="password" type="password"
-              placeholder="••••••••"
+              placeholder="Min. 6 characters"
               value={form.password} onChange={handle} required
             />
           </div>
+          <div className="form-group">
+            <label htmlFor="confirm">Confirm Password</label>
+            <input
+              id="confirm" name="confirm" type="password"
+              placeholder="••••••••"
+              value={form.confirm} onChange={handle} required
+            />
+          </div>
           <button className="btn btn-primary w-full" type="submit" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
 
         <div className="login-footer">
-          <div>Demo: admin@smartstock.io / admin123</div>
-          <div>Don't have an account? <Link to="/signup">Sign Up</Link></div>
+          <div>Already have an account? <Link to="/">Sign In</Link></div>
         </div>
       </div>
     </div>

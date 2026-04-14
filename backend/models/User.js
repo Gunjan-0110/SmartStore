@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
     edit:   { type: Boolean, default: false },
     delete: { type: Boolean, default: false },
     add:    { type: Boolean, default: false }
-  }
+  },
+  isSuperAdmin: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Hash password before saving

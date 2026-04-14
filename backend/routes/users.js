@@ -48,6 +48,14 @@ router.put('/:id', adminOnly, async (req, res) => {
     const existing = await User.findById(req.params.id);
     if (!existing) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Super admin account is completely locked — nobody can change it
+    if (existing.isSuperAdmin)
+      return res.status(403).json({ success: false, message: 'The super admin account cannot be modified' });
+
+    // Only super admin can promote/demote admins or edit other admin accounts
+    if (!req.user.isSuperAdmin && (existing.role === 'Admin' || role === 'Admin'))
+      return res.status(403).json({ success: false, message: 'Only the super admin can manage admin accounts' });
+
     const roleChanged = existing.role !== role;
 
     const user = await User.findByIdAndUpdate(
@@ -76,6 +84,14 @@ router.delete('/:id', adminOnly, async (req, res) => {
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Super admin can never be deleted
+    if (user.isSuperAdmin)
+      return res.status(403).json({ success: false, message: 'The super admin account cannot be deleted' });
+
+    // Only super admin can delete other admins
+    if (!req.user.isSuperAdmin && user.role === 'Admin')
+      return res.status(403).json({ success: false, message: 'Only the super admin can delete admin accounts' });
 
     await User.findByIdAndDelete(req.params.id);
 

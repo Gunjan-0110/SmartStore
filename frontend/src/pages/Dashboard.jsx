@@ -57,13 +57,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get('/assets'), api.get('/logs')])
-      .then(([a, l]) => {
-        setAssets(a.data.assets || []);
-        setLogs((l.data.logs || []).slice(0, 6));
-      })
+    // Always fetch assets
+    api.get('/assets')
+      .then(a => setAssets(a.data.assets || []))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Only fetch logs if admin
+    if (user?.role === 'Admin') {
+      api.get('/logs')
+        .then(l => setLogs((l.data.logs || []).slice(0, 6)))
+        .catch(console.error);
+    }
   }, []);
 
   const totalItems   = assets.reduce((s, a) => s + a.qty, 0);
@@ -113,7 +118,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts + Activity */}
-      <div className="two-col">
+      <div className={user?.role === 'Admin' ? 'two-col' : ''}>
         <div className="card">
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -124,37 +129,39 @@ export default function Dashboard() {
           <BarChart assets={assets} />
         </div>
 
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="font-bold">Recent Activity</div>
-              <div className="text-xs text-secondary">Latest audit events</div>
+        {user?.role === 'Admin' && (
+          <div className="card">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <div className="font-bold">Recent Activity</div>
+                <div className="text-xs text-secondary">Latest audit events</div>
+              </div>
+              <Link to="/audit" className="btn btn-ghost btn-sm">View All</Link>
             </div>
-            <Link to="/audit" className="btn btn-ghost btn-sm">View All</Link>
+            {logs.length === 0
+              ? <p className="text-secondary text-sm">No activity yet</p>
+              : logs.map((log, i) => {
+                  const pill = getOpPill(log.action);
+                  return (
+                    <div className="activity-item" key={log._id || i}>
+                      <div className="activity-avatar" style={getAvatarStyle(log.action)}>
+                        {getInitials(log.user)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
+                          <span className="font-medium text-sm">{log.user}</span>
+                          <span className={pill.cls}>{pill.label}</span>
+                        </div>
+                        <div className="activity-action text-sm">
+                          {log.action} — <span className="activity-target">{log.target}</span>
+                        </div>
+                        <div className="activity-time">{new Date(log.createdAt).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  );
+                })}
           </div>
-          {logs.length === 0
-            ? <p className="text-secondary text-sm">No activity yet</p>
-            : logs.map((log, i) => {
-                const pill = getOpPill(log.action);
-                return (
-                  <div className="activity-item" key={log._id || i}>
-                    <div className="activity-avatar" style={getAvatarStyle(log.action)}>
-                      {getInitials(log.user)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
-                        <span className="font-medium text-sm">{log.user}</span>
-                        <span className={pill.cls}>{pill.label}</span>
-                      </div>
-                      <div className="activity-action text-sm">
-                        {log.action} — <span className="activity-target">{log.target}</span>
-                      </div>
-                      <div className="activity-time">{new Date(log.createdAt).toLocaleString()}</div>
-                    </div>
-                  </div>
-                );
-              })}
-        </div>
+        )}
       </div>
 
       {/* Low stock table */}

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const AuditLog = require('../models/AuditLog');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
-router.use(protect);
+router.use(protect, adminOnly);
 
 // GET /api/logs
 router.get('/', async (req, res) => {

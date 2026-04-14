@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const IconDashboard = () => (
@@ -65,29 +65,28 @@ export default function Sidebar() {
           <NavLink to="/add-asset" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <IconPlus /> Add Asset
           </NavLink>
-        </div>
-
-        <div className="nav-section">
-          <div className="nav-label">Management</div>
-          <NavLink to="/audit" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <IconLog /> Audit Log
-          </NavLink>
-          {user?.role === 'Admin' && (
+        {user?.role === 'Admin' && (
+          <div className="nav-section">
+            <div className="nav-label">Management</div>
+            <NavLink to="/audit" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              <IconLog /> Audit Log
+            </NavLink>
             <NavLink to="/access" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               <IconUsers /> Access Control
             </NavLink>
-          )}
+          </div>
+        )}
         </div>
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-card">
+        <Link to="/profile" className="user-card" style={{ textDecoration: 'none', cursor: 'pointer' }}>
           <div className="avatar">{getInitials(user?.name)}</div>
           <div>
             <div className="user-name">{user?.name}</div>
-            <div className="user-role">{user?.role}</div>
+            <div className="user-role">{user?.isSuperAdmin ? 'Super Admin' : user?.role}</div>
           </div>
-        </div>
+        </Link>
         <button className="logout-btn" onClick={handleLogout}>Sign Out</button>
       </div>
     </aside>

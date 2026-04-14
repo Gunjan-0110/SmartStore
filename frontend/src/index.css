@@ -161,6 +161,7 @@ td { padding: 14px 16px; font-size: 13px; }
 .badge-low   { background: rgba(245,158,11,.15); color: var(--accent-yellow); }
 .badge-out   { background: rgba(239,68,68,.15);  color: var(--accent-red); }
 .badge-admin { background: rgba(168,85,247,.15); color: var(--accent-purple); }
+.badge-super-admin { background: rgba(168,85,247,.15); color: var(--accent-red); }
 .badge-user  { background: rgba(59,130,246,.15); color: var(--accent-blue); }
 .badge-success { background: rgba(34,197,94,.15);  color: var(--accent-green); }
 .badge-warning { background: rgba(245,158,11,.15); color: var(--accent-yellow); }
