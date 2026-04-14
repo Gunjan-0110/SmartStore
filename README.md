@@ -1,86 +1,106 @@
-# SmartStock OS — React + Express + MongoDB
+# SmartStock OS 📦📈
 
-Inventory Management System rebuilt from jQuery/HTML into a modern full-stack app.
+**SmartStock OS** is a premium, full-stack Inventory Management System built to orchestrate warehouse tracking, complex user permission environments, and deep operational analytics. It is engineered with a modern React frontend and a highly secure Express/MongoDB backend architecture.
 
-## Tech Stack
-- **Frontend:** React 18, React Router v6, Axios, Vite
-- **Backend:** Node.js, Express 4, JWT auth, bcryptjs
+---
+
+## 🌟 Key Features
+
+### 1. Robust Access Control & Permission Workflows
+The backbone of SmartStock is its granular security and role-management system. 
+- **Roles:** Clear `Admin` vs `User` boundaries. 
+- **Granular Editing Permissions:** Standard Users can be granted or restricted specific CRUD operations (`Read`, `Edit`, `Delete`, `Add`).
+- **Request Cycle:** Users can dynamically trigger automated "Permission Requests" to Admins if they encounter a restricted barrier.
+- **Admin Hub:** Admins have a dedicated dashboard to Approve/Reject privilege escalation requests and instantly elevate trusted floor managers.
+
+### 2. Deep Interactive Analytics
+The SmartStock dashboard goes far beyond simple counting. Powered by `recharts`, it renders multiple high-level insights instantly:
+- **Asset vs. Safety Threshold Matrix:** A composed graph simultaneously tracking current asset volumes against their critical "Minimum Safety Limits", immediately exposing vulnerabilities.
+- **Stock Health & Category Density:** Real-time semantic distribution of warehouse footprint (e.g., Electronics vs. Furniture) and pure health metrics (Healthy vs. Low Stock vs. Out of Stock).
+
+### 3. Absolute Audit Accountability
+No action occurs blindly. The system possesses a strictly enforced **Audit Log** schema traversing the backend infrastructure. Every modification, creation, deletion, or permission adjustment executed by any user is permanently logged with exact timestamps and target tracking.
+
+### 4. Enterprise UI/UX
+Designed meticulously without massive CSS frameworks, the platform features a highly custom, native CSS variables experience. It boasts:
+- Custom Glassmorphism and micro-animations.
+- **Native Light/Dark Mode** tracking that binds dynamically directly to the chart SVGs.
+- Optimistic UI updates ensuring no lag behind network requests.
+
+---
+
+## 🛠 Tech Stack
+- **Frontend Engine:** React 18 (Vite Bundler), React Router v6, Axios
+- **Data Visualizations:** Recharts
+- **Backend Architecture:** Node.js, Express 4.x
+- **Authentication:** JWT (JSON Web Tokens), `bcryptjs`
 - **Database:** MongoDB via Mongoose
 
-## Project Structure
+---
+
+## 📂 Project Structure
+
 ```
 smartstock/
 ├── backend/
-│   ├── models/         User.js | Asset.js | AuditLog.js
-│   ├── routes/         auth.js | assets.js | users.js | logs.js
-│   ├── middleware/     auth.js  (JWT protect + adminOnly)
-│   ├── server.js       Express entry point + DB seed
-│   ├── .env.example
-│   └── package.json
+│   ├── models/         # Mongoose Schemas: User, Asset, AuditLog, PermissionRequest
+│   ├── routes/         # REST API definitions (auth, assets, logs, requests)
+│   ├── middleware/     # JWT protection & Role-based gatekeepers
+│   ├── server.js       # Express entry point & auto-database seeder
+│   └── .env            # Environment config (Mongo URI, Secret Keys)
 ├── frontend/
 │   ├── src/
-│   │   ├── context/    AuthContext.jsx
-│   │   ├── services/   api.js  (Axios + JWT interceptor)
-│   │   ├── components/ Sidebar.jsx | Layout.jsx
-│   │   └── pages/      Login | Dashboard | Inventory | AddAsset | AuditLog | AccessControl
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-└── package.json        Root — runs both servers with one command
+│   │   ├── components/ # Core reusable shells (Sidebar, Layout, Topbar)
+│   │   ├── context/    # Global State mgmt (AuthContext, ThemeContext)
+│   │   ├── pages/      # The views (Dashboard, Inventory, AccessControl)
+│   │   └── services/   # Axios API client & JWT interceptors
+│   ├── index.css       # The entire native design token system
+│   └── vite.config.js
+└── package.json        # Root Concurrency driver
 ```
 
-## Setup & Run
+---
 
-### 1. Install all dependencies
+## 🚀 Quick Start Guide
+
+### 1. Initial Setup
+Ensure you have Node.js and MongoDB installed locally (or a remote URI).
+
+To install dependencies across both systems concurrently:
 ```bash
 npm run install-all
 ```
 
-### 2. Configure environment variables
+### 2. Configure Environment
+Head into the `/backend` directory and create your `.env` file! A template is provided.
+
 ```bash
 cp backend/.env.example backend/.env
-# Edit backend/.env — set MONGODB_URI and JWT_SECRET
+```
+Ensure you provide a valid MongoDB connection string and a secure JWT Secret:
+```env
+PORT=5002
+MONGODB_URI=mongodb://localhost:27017/smartstock
+JWT_SECRET=your_super_secret_jwt_key
 ```
 
-### 3. Run the full project (single command)
+### 3. Boot the Matrix
+SmartStock utilizes `concurrently` to launch the API and the React Client simultaneously from the root directory.
+
 ```bash
 npm run dev
 ```
+- **React Frontend:** http://localhost:5173
+- **Express API:** http://localhost:5002
 
-This starts both servers simultaneously:
-- **Backend** → http://localhost:5002
-- **Frontend** → http://localhost:5173
+---
 
-## Default Credentials (auto-seeded)
-| Email | Password | Role |
+## 🔑 Default Authorization
+When the backend server first connects to the database, it will autonomously inject seed data if it finds no users.
+
+| Role | Email | Password |
 |---|---|---|
-| admin@smartstock.io | admin123 | Admin |
-| demo@smartstock.io | demo123 | User |
+| **Admin** | `admin@smartstock.io` | `admin123` |
+| **Standard User** | `demo@smartstock.io` | `demo123` |
 
-## API Endpoints
-```
-POST   /api/auth/login       Login, returns JWT
-GET    /api/auth/me          Get current user
-
-GET    /api/assets           List all assets
-POST   /api/assets           Create asset
-PUT    /api/assets/:id       Update asset
-DELETE /api/assets/:id       Delete asset
-
-GET    /api/users            List users
-POST   /api/users            Add user (Admin)
-PUT    /api/users/:id        Update user (Admin)
-DELETE /api/users/:id        Delete user (Admin)
-
-GET    /api/logs             Get audit logs
-```
-
-## Key Improvements Over Original
-| Feature | Before | After |
-|---|---|---|
-| Auth | jQuery AJAX + users.json | JWT + bcrypt |
-| Frontend | Multi-page HTML | React SPA |
-| State | sessionStorage | React Context |
-| API calls | $.ajax / fetch | Axios + interceptors |
-| Routing | HTML page links | React Router (protected) |
-| Passwords | Plaintext | bcryptjs hashed |
+Log in immediately with the Admin credentials to test pending permission thresholds and explore the Audit interface!
