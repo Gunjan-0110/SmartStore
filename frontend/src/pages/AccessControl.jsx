@@ -95,7 +95,6 @@ export default function AccessControl() {
   const canToggleRole = (u) => {
     if (u.isSuperAdmin) return false;                              // super admin role is locked forever
     if (!me?.isSuperAdmin && u.role === 'Admin') return false;    // only super admin can demote admins
-    if (!me?.isSuperAdmin) return false;                          // only super admin can promote to admin
     return true;
   };
 

@@ -63,9 +63,9 @@ router.put('/:id', adminOnly, async (req, res) => {
     if (existing.isSuperAdmin)
       return res.status(403).json({ success: false, message: 'The super admin account cannot be modified' });
 
-    // Only super admin can promote/demote admins or edit other admin accounts
-    if (!req.user.isSuperAdmin && (existing.role === 'Admin' || role === 'Admin'))
-      return res.status(403).json({ success: false, message: 'Only the super admin can manage admin accounts' });
+    // Only super admin can demote/edit existing admins
+    if (!req.user.isSuperAdmin && existing.role === 'Admin')
+      return res.status(403).json({ success: false, message: 'Only the super admin can modify existing admin accounts' });
 
     const roleChanged = existing.role !== role;
 
