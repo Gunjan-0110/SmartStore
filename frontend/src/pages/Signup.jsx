@@ -7,6 +7,7 @@ export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handle = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -14,12 +15,14 @@ export default function Signup() {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     if (form.password !== form.confirm)
       return setError('Passwords do not match.');
     setLoading(true);
     try {
       await signup(form.name, form.email, form.password);
-      navigate('/dashboard');
+      setSuccess('Account created successfully! Redirecting to login...');
+      setTimeout(() => navigate('/'), 1200);
     } catch (err) {
       setError(err.response?.data?.message || 'Sign up failed. Please try again.');
     } finally {
@@ -36,7 +39,8 @@ export default function Signup() {
           <div className="login-sub">Create your account</div>
         </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+        {success && <div className="alert" style={{ marginBottom: 16, background: 'rgba(34,197,94,.15)', border: '1px solid var(--accent-green)', color: 'var(--accent-green)' }}>{success}</div>}
 
         <form className="login-form" onSubmit={submit}>
           <div className="form-group">
@@ -71,8 +75,8 @@ export default function Signup() {
               value={form.confirm} onChange={handle} required
             />
           </div>
-          <button className="btn btn-primary w-full" type="submit" disabled={loading}>
-            {loading ? 'Creating account…' : 'Create Account'}
+          <button className="btn btn-primary w-full" type="submit" disabled={loading || !!success}>
+            {loading && !success ? 'Creating account…' : success ? 'Success' : 'Create Account'}
           </button>
         </form>
 
