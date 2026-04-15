@@ -9,7 +9,8 @@ const auditLogSchema = new mongoose.Schema({
       'Created Asset', 'Updated Asset', 'Deleted Asset',
       'Updated Inventory', 'Changed User Role', 'Added User',
       'Deleted User', 'Updated User', 'Login', 'Logout',
-      'Approved Permission Request', 'Rejected Permission Request'
+      'Approved Permission Request', 'Rejected Permission Request',
+      'Registered'
     ]
   },
   target:  { type: String, required: true },

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const { protect } = require('../middleware/auth');
+const { sendWelcomeEmail, sendLoginAlert } = require('../utils/mailer');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -27,6 +28,9 @@ router.post('/register', async (req, res) => {
     await AuditLog.create({
       user: user.name, action: 'Registered', target: user.email, status: 'Success'
     });
+
+    // Fire & Forget email dispatch
+    sendWelcomeEmail(user.email, user.name);
 
     res.status(201).json({
       success: true,
@@ -60,6 +64,9 @@ router.post('/login', async (req, res) => {
     await AuditLog.create({
       user: user.name, action: 'Login', target: user.email, status: 'Success'
     });
+
+    // Fire & Forget email dispatch
+    sendLoginAlert(user.email, user.name);
 
     res.json({
       success: true,
