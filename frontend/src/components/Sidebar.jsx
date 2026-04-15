@@ -38,13 +38,13 @@ function getInitials(name = '') {
   return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => { logout(); navigate('/'); };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
         <div className="logo-icon">S</div>
         <div>
@@ -56,22 +56,22 @@ export default function Sidebar() {
       <nav className="sidebar-nav">
         <div className="nav-section">
           <div className="nav-label">Main</div>
-          <NavLink to="/dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <NavLink to="/dashboard" onClick={onClose} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <IconDashboard /> Dashboard
           </NavLink>
-          <NavLink to="/inventory" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <NavLink to="/inventory" onClick={onClose} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <IconBox /> Inventory
           </NavLink>
-          <NavLink to="/add-asset" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <NavLink to="/add-asset" onClick={onClose} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <IconPlus /> Add Asset
           </NavLink>
         {user?.role === 'Admin' && (
           <div className="nav-section">
             <div className="nav-label">Management</div>
-            <NavLink to="/audit" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <NavLink to="/audit" onClick={onClose} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               <IconLog /> Audit Log
             </NavLink>
-            <NavLink to="/access" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <NavLink to="/access" onClick={onClose} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               <IconUsers /> Access Control
             </NavLink>
           </div>

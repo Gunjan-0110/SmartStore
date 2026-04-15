@@ -84,7 +84,6 @@ export default function Login() {
         </form>
 
         <div className="login-footer">
-          <div>Demo: admin@smartstock.io / admin123</div>
           <div>Don't have an account? <Link to="/signup">Sign Up</Link></div>
         </div>
       </div>
