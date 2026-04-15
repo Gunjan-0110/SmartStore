@@ -60,24 +60,21 @@ async function seedDatabase() {
   const AuditLog = require('./models/AuditLog');
 
   if ((await User.countDocuments()) === 0) {
-    await User.create([
-      {
-        email: 'admin@smartstock.io',
-        password: 'admin123',
-        name: 'Admin User',
-        role: 'Admin',
-        isSuperAdmin: true,
-        permissions: { read: true, edit: true, delete: true, add: true }
-      },
-      {
-        email: 'demo@smartstock.io',
-        password: 'demo123',
-        name: 'Demo User',
-        role: 'User',
-        permissions: { read: true, edit: true, delete: false, add: true }
-      }
-    ]);
-    console.log('✓ Seeded default users');
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.warn('⚠️ Skipping Admin Seeding: ADMIN_EMAIL or ADMIN_PASSWORD missing from .env');
+    } else {
+      await User.create([
+        {
+          email: process.env.ADMIN_EMAIL,
+          password: process.env.ADMIN_PASSWORD,
+          name: 'Master Admin',
+          role: 'Admin',
+          isSuperAdmin: true,
+          permissions: { read: true, edit: true, delete: true, add: true }
+        }
+      ]);
+      console.log('✓ Seeded master admin securely from .env configuration');
+    }
   }
 
   if ((await Asset.countDocuments()) === 0) {
