@@ -141,8 +141,8 @@ export default function Dashboard() {
                     <div className="text-xs text-secondary">Actual inventory vs minimum limits</div>
                   </div>
                 </div>
-                <div style={{ width: '100%', flex: 1, minHeight: 260 }}>
-                  <ResponsiveContainer>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={composedData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} dy={10} />
