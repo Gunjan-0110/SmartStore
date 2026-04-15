@@ -161,7 +161,7 @@ body {
 
 /* ── Buttons ── */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
   border: none; cursor: pointer; transition: all .15s; text-decoration: none;
 }
