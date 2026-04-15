@@ -148,7 +148,8 @@ body {
 .card-sm { padding: 16px 20px; }
 
 /* ── Stat Grid ── */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 1050px) { .stat-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
 .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; transition: background .2s; }
 .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
 .stat-value { font-size: 28px; font-weight: 700; }
